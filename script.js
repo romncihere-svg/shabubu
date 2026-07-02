@@ -231,14 +231,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Crystal heart must NOT write depth — otherwise it occludes the inner video heart
     crystalMaterial.depthWrite = false;
 
-    const innerHeartMat = new THREE.MeshBasicMaterial({
-        map: videoTexture,
-        transparent: true,
-        opacity: 0,
-        color: 0xffffff,
-        side: THREE.DoubleSide,
-        depthWrite: false
-    });
+const innerHeartMat = new THREE.MeshBasicMaterial({
+    color: 0xff0000,
+    side: THREE.DoubleSide
+});
 
     const flatExtrudeSettings = { steps: 1, depth: 0.01, bevelEnabled: false };
     const flatHeartGeo = new THREE.ExtrudeGeometry(heartShape, flatExtrudeSettings);
