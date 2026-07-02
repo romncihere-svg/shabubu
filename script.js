@@ -232,8 +232,10 @@ document.addEventListener('DOMContentLoaded', () => {
     crystalMaterial.depthWrite = false;
 
 const innerHeartMat = new THREE.MeshBasicMaterial({
-    color: 0xff0000,
-    side: THREE.DoubleSide
+    map: videoTexture,
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthWrite: false
 });
 
     const flatExtrudeSettings = { steps: 1, depth: 0.01, bevelEnabled: false };
@@ -262,11 +264,9 @@ const innerHeartMat = new THREE.MeshBasicMaterial({
     }
     uvs.needsUpdate = true;
 
-    const innerHeartMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(4, 4, 4),
-    new THREE.MeshBasicMaterial({
-        color: 0xff0000
-    })
+const innerHeartMesh = new THREE.Mesh(
+    flatHeartGeo,
+    innerHeartMat
 );
     innerHeartMesh.rotation.x = Math.PI; // Matches crystalHeart orientation
     innerHeartMesh.scale.set(0.58, 0.58, 0.58);
@@ -277,7 +277,14 @@ const innerHeartMat = new THREE.MeshBasicMaterial({
     innerHeartMesh.renderOrder = 2;
     crystalHeart.renderOrder = 1;
     heartGroup.add(innerHeartMesh);
+innerHeartMesh.position.set(0,0,0.82);
+innerHeartMesh.renderOrder = 999;
 
+crystalHeart.renderOrder = 1;
+
+crystalMaterial.depthWrite = false;
+crystalMaterial.transparent = true;
+crystalMaterial.opacity = 0.2;
     // ----------------------------------------------------
     // 5. 3D ORBITING MEMORY CARDS
     // ----------------------------------------------------
