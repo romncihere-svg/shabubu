@@ -64,9 +64,9 @@ html {
     /* Let canvas drag work freely */
     display: grid;
     grid-template-columns: 320px 1fr;
-    grid-template-rows: 80px 1fr;
     padding: 20px;
     gap: 20px;
+    align-content: start;
 }
 
 /* Enable pointer events only for active interactive components */
