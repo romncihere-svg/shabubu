@@ -13,8 +13,8 @@
     --glass-glow: rgba(244, 114, 182, 0.15);
 
     /* Cursors */
-    --cursor-default: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32"><path fill="%23ffffff" stroke="%23f472b6" stroke-width="2" stroke-linejoin="round" d="M16 3L19 13L29 16L19 19L16 29L13 19L3 16L13 13L16 3Z"/></svg>') 14 14, auto;
-    --cursor-pointer: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32"><path fill="%23f472b6" stroke="%23ffffff" stroke-width="2" d="M16 28.47l-1.93-1.76C6.53 20.48 2 16.37 2 11.33 2 7.23 5.23 4 9.33 4c2.32 0 4.55 1.08 6 2.79C16.78 5.08 19.01 4 21.33 4 25.43 4 28.67 7.23 28.67 11.33c0 5.04-4.53 9.15-11.4 15.39L16 28.47z"/></svg>') 14 14, pointer;
+    --cursor-default: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSczMicgaGVpZ2h0PSczMicgdmlld0JveD0nMCAwIDMyIDMyJz48cGF0aCBmaWxsPScjZmZmZmZmJyBzdHJva2U9JyNmNDcyYjYnIHN0cm9rZS13aWR0aD0nMicgc3Ryb2tlLWxpbmVqb2luPSdyb3VuZCcgZD0nTTE2IDNMMTkgMTNMMjkgMTZMMTkgMTlMMTYgMjlMMTMgMTlMMyAxNkwxMyAxM0wxNiAzWicvPjwvc3ZnPg==') 16 16, auto;
+    --cursor-pointer: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSczMicgaGVpZ2h0PSczMicgdmlld0JveD0nMCAwIDMyIDMyJz48cGF0aCBmaWxsPScjZjQ3MmI2JyBzdHJva2U9JyNmZmZmZmYnIHN0cm9rZS13aWR0aD0nMicgZD0nTTE2IDI4LjQ3bC0xLjkzLTEuNzZDNi41MyAyMC40OCAyIDE2LjM3IDIgMTEuMzMgMiA3LjIzIDUuMjMgNCA5LjMzIDRjMi4zMiAwIDQuNTUgMS4wOCA2IDIuNzlDMTYuNzggNS4wOCAxOS4wMSA0IDIxLjMzIDQgMjUuNDMgNCAyOC42NyA3LjIzIDI4LjY3IDExLjMzYzAgNS4wNC00LjUzIDkuMTUtMTEuNCAxNS4zOUwxNiAyOC40N3onLz48L3N2Zz4=') 16 16, pointer;
 
     --font-heading: 'Cinzel Decorative', Georgia, serif;
     --font-serif: 'Playfair Display', serif;
