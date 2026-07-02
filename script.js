@@ -258,7 +258,8 @@ document.addEventListener('DOMContentLoaded', () => {
         transparent: true,
         opacity: 0,
         color: 0xffffff,
-        side: THREE.FrontSide,
+        side: THREE.DoubleSide,   // DoubleSide: rotation.x=PI flips normals away from camera;
+                                   // DoubleSide ensures all triangles render regardless of winding
         depthWrite: false,
         toneMapped: false
     });
@@ -290,12 +291,12 @@ document.addEventListener('DOMContentLoaded', () => {
     })(heartShapeGeo);
 
     const innerHeartMesh = new THREE.Mesh(heartShapeGeo, innerHeartMat);
-    // Don't rotate the inner mesh with Math.PI — instead keep it aligned with
-    // the crystal heart (which already has rotation.x = Math.PI). The inner mesh
-    // sits INSIDE heartGroup (not inside crystalHeart), so it needs its own flip.
     innerHeartMesh.rotation.x = Math.PI;
     innerHeartMesh.scale.set(0.58, 0.58, 0.58);
-    innerHeartMesh.position.z = 0.85;  // slightly in front of the crystal face
+    // z=1.2 places the flat video plane clearly AHEAD of the crystal front face
+    // (which sits at ~z=0.75 in heartGroup space after rotation.x=PI on crystalHeart).
+    // This prevents the extrusion walls from blocking the inner face.
+    innerHeartMesh.position.z = 1.2;
     innerHeartMesh.renderOrder = 10;   // always on top
     crystalHeart.renderOrder = 1;
     heartGroup.add(innerHeartMesh);
