@@ -231,19 +231,24 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch(err => console.error("Blob fetch failed:", err));
 
-    // BRUTE FORCE PIXEL FLIP: Draw video upside down to a hidden 2D canvas
+    // BRUTE FORCE PIXEL FLIP: Draw video onto a 2D canvas, corrected for UV orientation
     const videoCanvas = document.createElement('canvas');
-    videoCanvas.width = 1024;
-    videoCanvas.height = 1024;
+    videoCanvas.width = 512;
+    videoCanvas.height = 512;
     const videoCtx = videoCanvas.getContext('2d');
+
+    // Pre-fill with a dark color so the canvas isn't empty while video loads
+    videoCtx.fillStyle = '#1a0a2e';
+    videoCtx.fillRect(0, 0, videoCanvas.width, videoCanvas.height);
     
     const videoTexture = new THREE.CanvasTexture(videoCanvas);
     videoTexture.encoding = THREE.sRGBEncoding;
     videoTexture.minFilter = THREE.LinearFilter;
     videoTexture.magFilter = THREE.LinearFilter;
     videoTexture.generateMipmaps = false;
-
-    // We will update this canvas manually in the render loop
+    // Flip UV vertically: ShapeGeometry UVs go bottom-up but canvas is top-down.
+    // Combined with innerHeartMesh.rotation.x = Math.PI the net result is correct.
+    videoTexture.flipY = false;
 
     // Crystal heart must NOT write depth — otherwise it occludes the inner video heart
     crystalMaterial.depthWrite = false;
@@ -253,19 +258,41 @@ document.addEventListener('DOMContentLoaded', () => {
         transparent: true,
         opacity: 0,
         color: 0xffffff,
-        side: THREE.DoubleSide,
+        side: THREE.FrontSide,
         depthWrite: false,
         toneMapped: false
     });
 
-    const heartShapeGeo = new THREE.ShapeGeometry(heartShape);
+    const heartShapeGeo = new THREE.ShapeGeometry(heartShape, 12);
     heartShapeGeo.center();
 
+    // Fix UVs: ShapeGeometry UVs are in shape local space; remap to [0,1] based on bounding box
+    (function fixShapeUVs(geo) {
+        geo.computeBoundingBox();
+        const bbox = geo.boundingBox;
+        const bw = bbox.max.x - bbox.min.x;
+        const bh = bbox.max.y - bbox.min.y;
+        const uvAttr = geo.attributes.uv;
+        const posAttr = geo.attributes.position;
+        for (let i = 0; i < posAttr.count; i++) {
+            const px = posAttr.getX(i);
+            const py = posAttr.getY(i);
+            uvAttr.setXY(i,
+                (px - bbox.min.x) / bw,
+                (py - bbox.min.y) / bh
+            );
+        }
+        uvAttr.needsUpdate = true;
+    })(heartShapeGeo);
+
     const innerHeartMesh = new THREE.Mesh(heartShapeGeo, innerHeartMat);
+    // Don't rotate the inner mesh with Math.PI — instead keep it aligned with
+    // the crystal heart (which already has rotation.x = Math.PI). The inner mesh
+    // sits INSIDE heartGroup (not inside crystalHeart), so it needs its own flip.
     innerHeartMesh.rotation.x = Math.PI;
     innerHeartMesh.scale.set(0.58, 0.58, 0.58);
-    innerHeartMesh.position.z = 1.0;
-    innerHeartMesh.renderOrder = 2;
+    innerHeartMesh.position.z = 0.85;  // slightly in front of the crystal face
+    innerHeartMesh.renderOrder = 10;   // always on top
     crystalHeart.renderOrder = 1;
     heartGroup.add(innerHeartMesh);
 
@@ -1396,15 +1423,14 @@ document.addEventListener('DOMContentLoaded', () => {
             heartGroup.position.y = Math.sin(heartAnimTime * 1.5) * 0.4;
         }
 
-        // CRITICAL: Update video onto the canvas texture manually, and FLIP IT
-        if (videoTexture && videoElement.readyState >= 2) {
-            videoCtx.save();
-            // Flip the canvas context vertically before drawing
-            videoCtx.translate(0, videoCanvas.height);
-            videoCtx.scale(1, -1);
-            videoCtx.drawImage(videoElement, 0, 0, videoCanvas.width, videoCanvas.height);
-            videoCtx.restore();
-            
+        // CRITICAL: Update video onto the canvas texture every frame.
+        // readyState >= 2 (HAVE_CURRENT_DATA) is the minimum needed to draw a frame.
+        // flipY=false on the texture means WebGL reads the canvas bottom-up, which
+        // cancels out the top-down canvas coordinate system — net result: correct orientation.
+        if (videoTexture && videoElement.readyState >= 1) {
+            if (videoElement.readyState >= 2) {
+                videoCtx.drawImage(videoElement, 0, 0, videoCanvas.width, videoCanvas.height);
+            }
             videoTexture.needsUpdate = true;
         }
 
