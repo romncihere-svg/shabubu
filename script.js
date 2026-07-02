@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastHeartClickTime = 0;
     const HEART_CLICK_DEBOUNCE = 350; // ms min between clicks
     let fireworksActive = false;      // blocks re-triggering during show
+    let continuousFireworksInterval = null; // keeps track of the continuous background fireworks
     let hasTriggeredMemories = false; // tracks if the big heart bg should show
     let isVideoPlaying = false;
     let heartAnimTime = 0;
@@ -133,6 +134,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const directionalLight = new THREE.DirectionalLight(0xa78bfa, 1.2);
     directionalLight.position.set(5, 15, -5);
     scene.add(directionalLight);
+
+    const memoriesLight = new THREE.PointLight(0xffb5d2, 0, 150); // Starts at 0 intensity
+    memoriesLight.position.set(0, 10, -30);
+    scene.add(memoriesLight);
 
     // ----------------------------------------------------
     // BACKGROUND BIG HEART PNG
@@ -908,6 +913,35 @@ document.addEventListener('DOMContentLoaded', () => {
     // ====================================================
     // FIREWORKS SEQUENCE + MEMORIES TRANSITION
     // ====================================================
+    const fireworkColors = [0xf472b6, 0xa78bfa, 0xfbbf24, 0x60a5fa, 0xff88cc, 0xffffff];
+
+    function startMemoriesMode() {
+        if (continuousFireworksInterval) return;
+        
+        // Background light fades in for a nice glow
+        gsap.to(memoriesLight, { intensity: 3, duration: 2 });
+        
+        continuousFireworksInterval = setInterval(() => {
+            if (document.hidden) return; // don't spawn if tab is inactive
+            const color = fireworkColors[Math.floor(Math.random() * fireworkColors.length)];
+            const pos = new THREE.Vector3(
+                (Math.random() - 0.5) * 50,
+                (Math.random() * 20) + 5,
+                (Math.random() - 0.5) * 20 - 15
+            );
+            const withWhistle = Math.random() > 0.6;
+            explodeFireworkShell(pos, color, 60 + Math.random() * 30, withWhistle);
+        }, 1200); // 1.2 seconds between continuous random fireworks
+    }
+
+    function stopMemoriesMode() {
+        if (continuousFireworksInterval) {
+            clearInterval(continuousFireworksInterval);
+            continuousFireworksInterval = null;
+        }
+        gsap.to(memoriesLight, { intensity: 0, duration: 1.5 });
+    }
+
     function triggerFireworksAndMemories() {
         fireworksActive = true;
 
@@ -954,6 +988,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 memBtn.classList.add('active');
             }
             currentDimension = 'memories';
+            startMemoriesMode();
             document.getElementById('codex-tip-text').innerText = "Click on any floating photo card to open it up.";
             gsap.to(camera.position, { x: 0, y: 8, z: 18, duration: 2.8, ease: 'power2.inOut' });
             gsap.to(bigHeartMat, { opacity: 0.9, duration: 2.8, ease: 'power2.inOut' });
@@ -1198,6 +1233,12 @@ Jack ❤️`;
 
             const target = btn.dataset.target;
             currentDimension = target;
+
+            if (target === 'memories') {
+                startMemoriesMode();
+            } else {
+                stopMemoriesMode();
+            }
 
             // Reset panel hides
             document.getElementById('synth-panel').classList.add('hidden');
