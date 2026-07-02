@@ -993,3 +993,32 @@ a, button, [role="button"], input, label, select, textarea, .tap-to-start, .rune
     border-radius: 10px;
     box-shadow: 0 0 30px rgba(244, 114, 182, 0.3);
 }
+/* Romantic Click Hint */
+.click-heart-hint {
+    position: fixed;
+    top: 42%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    z-index: 1000;
+    animation: bounceHint 2s infinite ease-in-out;
+}
+.click-heart-hint .hint-text {
+    font-family: var(--font-signature);
+    font-size: 2rem;
+    color: var(--accent-celestial);
+    text-shadow: 0 0 10px rgba(244, 114, 182, 0.8);
+    margin-bottom: 10px;
+}
+.click-heart-hint .hint-arrow {
+    font-size: 2.5rem;
+    color: var(--accent-heart);
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.8);
+}
+@keyframes bounceHint {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+    50% { transform: translate(-50%, -50%) translateY(-15px); }
+}
