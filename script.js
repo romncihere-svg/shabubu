@@ -925,9 +925,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (document.hidden) return; // don't spawn if tab is inactive
             const color = fireworkColors[Math.floor(Math.random() * fireworkColors.length)];
             const pos = new THREE.Vector3(
-                (Math.random() - 0.5) * 50,
-                (Math.random() * 20) + 5,
-                (Math.random() - 0.5) * 20 - 15
+                (Math.random() - 0.5) * 140, // Wider spread across the background
+                (Math.random() * 80) - 10,   // Spread across the height of the image
+                -52 + (Math.random() * 6)    // Pushed far back just in front of Heart Bg.png (Z=-55)
             );
             const withWhistle = Math.random() > 0.6;
             explodeFireworkShell(pos, color, Math.floor(60 + Math.random() * 30), withWhistle);
