@@ -231,24 +231,14 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch(err => console.error("Blob fetch failed:", err));
 
-    // BRUTE FORCE PIXEL FLIP: Draw video onto a 2D canvas, corrected for UV orientation
-    const videoCanvas = document.createElement('canvas');
-    videoCanvas.width = 512;
-    videoCanvas.height = 512;
-    const videoCtx = videoCanvas.getContext('2d');
-
-    // Pre-fill with a dark color so the canvas isn't empty while video loads
-    videoCtx.fillStyle = '#1a0a2e';
-    videoCtx.fillRect(0, 0, videoCanvas.width, videoCanvas.height);
-    
-    const videoTexture = new THREE.CanvasTexture(videoCanvas);
+    // THREE.VideoTexture: streams directly from the video element, zero canvas artifacts.
+    // Blob URL makes it same-origin so WebGL reads it without CORS errors.
+    const videoTexture = new THREE.VideoTexture(videoElement);
     videoTexture.encoding = THREE.sRGBEncoding;
     videoTexture.minFilter = THREE.LinearFilter;
     videoTexture.magFilter = THREE.LinearFilter;
     videoTexture.generateMipmaps = false;
-    // Leave flipY = true (Three.js default). With flipY=true, UV v=1 maps to
-    // the canvas top-row (y=0). We compensate for rotation.x=PI by inverting
-    // the UV Y in fixShapeUVs below, so the video appears right-side up.
+    // flipY=true (default). UV Y is inverted in fixShapeUVs to cancel rotation.x=PI.
 
     // Crystal heart must NOT write depth — otherwise it occludes the inner video heart
     crystalMaterial.depthWrite = false;
@@ -1428,13 +1418,7 @@ document.addEventListener('DOMContentLoaded', () => {
             heartGroup.position.y = Math.sin(heartAnimTime * 1.5) * 0.4;
         }
 
-        // Update video canvas texture every frame.
-        // flipY=true (default): UV v=1 → canvas top row (y=0), so the video
-        // appears correctly oriented after the inverted UV Y in fixShapeUVs.
-        if (videoTexture && videoElement.readyState >= 2) {
-            videoCtx.drawImage(videoElement, 0, 0, videoCanvas.width, videoCanvas.height);
-            videoTexture.needsUpdate = true;
-        }
+        // VideoTexture auto-updates from the video element — nothing to do here.
 
         // Slow rotation for the memories
         if (currentDimension === 'memories') {
