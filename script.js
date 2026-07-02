@@ -262,7 +262,12 @@ const innerHeartMat = new THREE.MeshBasicMaterial({
     }
     uvs.needsUpdate = true;
 
-    const innerHeartMesh = new THREE.Mesh(flatHeartGeo, innerHeartMat);
+    const innerHeartMesh = new THREE.Mesh(
+    new THREE.BoxGeometry(4, 4, 4),
+    new THREE.MeshBasicMaterial({
+        color: 0xff0000
+    })
+);
     innerHeartMesh.rotation.x = Math.PI; // Matches crystalHeart orientation
     innerHeartMesh.scale.set(0.58, 0.58, 0.58);
     // Push the video plane to z=1.0 so it sits clearly in FRONT of the crystal shell
