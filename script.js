@@ -246,9 +246,9 @@ document.addEventListener('DOMContentLoaded', () => {
     videoTexture.minFilter = THREE.LinearFilter;
     videoTexture.magFilter = THREE.LinearFilter;
     videoTexture.generateMipmaps = false;
-    // Flip UV vertically: ShapeGeometry UVs go bottom-up but canvas is top-down.
-    // Combined with innerHeartMesh.rotation.x = Math.PI the net result is correct.
-    videoTexture.flipY = false;
+    // Leave flipY = true (Three.js default). With flipY=true, UV v=1 maps to
+    // the canvas top-row (y=0). We compensate for rotation.x=PI by inverting
+    // the UV Y in fixShapeUVs below, so the video appears right-side up.
 
     // Crystal heart must NOT write depth — otherwise it occludes the inner video heart
     crystalMaterial.depthWrite = false;
@@ -266,7 +266,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const heartShapeGeo = new THREE.ShapeGeometry(heartShape, 12);
     heartShapeGeo.center();
 
-    // Fix UVs: ShapeGeometry UVs are in shape local space; remap to [0,1] based on bounding box
+    // Fix UVs: remap to [0,1] based on bounding box, with Y inverted.
+    // Why invert Y?
+    //   - rotation.x = PI flips the mesh so physical bottom (bbox.min.y) appears at the visual top.
+    //   - With flipY=true (default), UV v=1 maps to canvas y=0 (top of video).
+    //   - So visual-top (physical min.y) must get UV v=1, meaning: uvY = 1 - (py - min) / h
     (function fixShapeUVs(geo) {
         geo.computeBoundingBox();
         const bbox = geo.boundingBox;
@@ -279,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const py = posAttr.getY(i);
             uvAttr.setXY(i,
                 (px - bbox.min.x) / bw,
-                (py - bbox.min.y) / bh
+                1.0 - (py - bbox.min.y) / bh   // inverted Y to cancel the rotation.x=PI flip
             );
         }
         uvAttr.needsUpdate = true;
@@ -1423,14 +1427,11 @@ document.addEventListener('DOMContentLoaded', () => {
             heartGroup.position.y = Math.sin(heartAnimTime * 1.5) * 0.4;
         }
 
-        // CRITICAL: Update video onto the canvas texture every frame.
-        // readyState >= 2 (HAVE_CURRENT_DATA) is the minimum needed to draw a frame.
-        // flipY=false on the texture means WebGL reads the canvas bottom-up, which
-        // cancels out the top-down canvas coordinate system — net result: correct orientation.
-        if (videoTexture && videoElement.readyState >= 1) {
-            if (videoElement.readyState >= 2) {
-                videoCtx.drawImage(videoElement, 0, 0, videoCanvas.width, videoCanvas.height);
-            }
+        // Update video canvas texture every frame.
+        // flipY=true (default): UV v=1 → canvas top row (y=0), so the video
+        // appears correctly oriented after the inverted UV Y in fixShapeUVs.
+        if (videoTexture && videoElement.readyState >= 2) {
+            videoCtx.drawImage(videoElement, 0, 0, videoCanvas.width, videoCanvas.height);
             videoTexture.needsUpdate = true;
         }
 
