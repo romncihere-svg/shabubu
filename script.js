@@ -240,54 +240,65 @@ document.addEventListener('DOMContentLoaded', () => {
     videoTexture.generateMipmaps = false;
     // flipY=true (default). UV Y is inverted in fixShapeUVs to cancel rotation.x=PI.
 
-    // Crystal heart must NOT write depth — otherwise it occludes the inner video heart
+    // Crystal heart must NOT write depth
     crystalMaterial.depthWrite = false;
+
+    // ─── HEART ALPHA MASK ────────────────────────────────────────────────────
+    // Draw the heart path onto a canvas: white inside, black outside.
+    // Apply as alphaMap on a simple PlaneGeometry — zero UV/rotation math needed.
+    //
+    // Heart original coords: x in [-3, 8] (width=11), y in [0, 9.5] (height=9.5)
+    // The heart shape is INVERTED in y (drawn in 2D screen coords where y goes down):
+    //   y=0  → bumps top  → after rotation.x=PI on crystalHeart → visual TOP
+    //   y=9.5→ pointed tip → after rotation.x=PI on crystalHeart → visual BOTTOM
+    // For the video PLANE (no rotation, faces camera naturally):
+    //   canvas y=0 (top) → UV v=1 → visual TOP  ✓  so bumps (y=0) → canvas top
+    //   canvas y=512 (bottom) → UV v=0 → visual BOTTOM  ✓  tip (y=9.5) → canvas bottom
+    const heartMaskCanvas = document.createElement('canvas');
+    heartMaskCanvas.width = 512;
+    heartMaskCanvas.height = 512;
+    const heartMaskCtx = heartMaskCanvas.getContext('2d');
+    heartMaskCtx.fillStyle = 'black';
+    heartMaskCtx.fillRect(0, 0, 512, 512);
+    heartMaskCtx.fillStyle = 'white';
+    heartMaskCtx.beginPath();
+    // Uniform scale: both axes use the same px/unit so the heart isn't squished
+    const _HUS = (512 - 40) / 11; // ≈ 42.9 px per unit
+    const _hmx = (hx) => (hx + 3) * _HUS + 20;        // x: -3→20, 8→492
+    const _hmy = (hy) => (hy / 9.5) * (512 - 40) + 20; // y: 0→20(top), 9.5→492(bottom)
+    heartMaskCtx.moveTo(_hmx(2.5), _hmy(2.5));
+    heartMaskCtx.bezierCurveTo(_hmx(2.5), _hmy(2.5), _hmx(2), _hmy(0), _hmx(0), _hmy(0));
+    heartMaskCtx.bezierCurveTo(_hmx(-3), _hmy(0), _hmx(-3), _hmy(3.5), _hmx(-3), _hmy(3.5));
+    heartMaskCtx.bezierCurveTo(_hmx(-3), _hmy(5.5), _hmx(-1), _hmy(7.7), _hmx(2.5), _hmy(9.5));
+    heartMaskCtx.bezierCurveTo(_hmx(6), _hmy(7.7), _hmx(8), _hmy(5.5), _hmx(8), _hmy(3.5));
+    heartMaskCtx.bezierCurveTo(_hmx(8), _hmy(3.5), _hmx(8), _hmy(0), _hmx(5), _hmy(0));
+    heartMaskCtx.bezierCurveTo(_hmx(3.5), _hmy(0), _hmx(2.5), _hmy(2.5), _hmx(2.5), _hmy(2.5));
+    heartMaskCtx.fill();
+    const heartMaskTexture = new THREE.CanvasTexture(heartMaskCanvas);
+    heartMaskTexture.minFilter = THREE.LinearFilter;
+    heartMaskTexture.magFilter = THREE.LinearFilter;
+    heartMaskTexture.generateMipmaps = false;
+    // ─────────────────────────────────────────────────────────────────────────
 
     const innerHeartMat = new THREE.MeshBasicMaterial({
         map: videoTexture,
+        alphaMap: heartMaskTexture, // ← clips to heart shape; no ShapeGeometry UV pain
         transparent: true,
         opacity: 0,
         color: 0xffffff,
-        side: THREE.DoubleSide,   // DoubleSide: rotation.x=PI flips normals away from camera;
-                                   // DoubleSide ensures all triangles render regardless of winding
+        side: THREE.DoubleSide,
         depthWrite: false,
         toneMapped: false
     });
 
-    const heartShapeGeo = new THREE.ShapeGeometry(heartShape, 12);
-    heartShapeGeo.center();
-
-    // Fix UVs: remap to [0,1] based on bounding box, with Y inverted.
-    // Why invert Y?
-    //   - rotation.x = PI flips the mesh so physical bottom (bbox.min.y) appears at the visual top.
-    //   - With flipY=true (default), UV v=1 maps to canvas y=0 (top of video).
-    //   - So visual-top (physical min.y) must get UV v=1, meaning: uvY = 1 - (py - min) / h
-    (function fixShapeUVs(geo) {
-        geo.computeBoundingBox();
-        const bbox = geo.boundingBox;
-        const bw = bbox.max.x - bbox.min.x;
-        const bh = bbox.max.y - bbox.min.y;
-        const uvAttr = geo.attributes.uv;
-        const posAttr = geo.attributes.position;
-        for (let i = 0; i < posAttr.count; i++) {
-            const px = posAttr.getX(i);
-            const py = posAttr.getY(i);
-            uvAttr.setXY(i,
-                (px - bbox.min.x) / bw,
-                1.0 - (py - bbox.min.y) / bh   // inverted Y to cancel the rotation.x=PI flip
-            );
-        }
-        uvAttr.needsUpdate = true;
-    })(heartShapeGeo);
-
-    const innerHeartMesh = new THREE.Mesh(heartShapeGeo, innerHeartMat);
-    innerHeartMesh.rotation.x = Math.PI;
-    innerHeartMesh.scale.set(0.58, 0.58, 0.58);
-    // z=1.2 places the flat video plane clearly AHEAD of the crystal front face
-    // (which sits at ~z=0.75 in heartGroup space after rotation.x=PI on crystalHeart).
-    // This prevents the extrusion walls from blocking the inner face.
-    innerHeartMesh.position.z = 1.2;
-    innerHeartMesh.renderOrder = 10;   // always on top
+    // Simple rectangle — faces +z (toward camera) with correct UVs out of the box.
+    // Scale 0.9 makes the heart on the mask match the crystal heart's visual size.
+    const innerHeartGeo = new THREE.PlaneGeometry(8, 8);
+    const innerHeartMesh = new THREE.Mesh(innerHeartGeo, innerHeartMat);
+    // NO rotation.x=PI — the plane already faces the camera. No flip needed.
+    innerHeartMesh.scale.set(0.9, 0.9, 0.9);
+    innerHeartMesh.position.z = 1.2;  // in front of the crystal shell
+    innerHeartMesh.renderOrder = 10;
     crystalHeart.renderOrder = 1;
     heartGroup.add(innerHeartMesh);
 
