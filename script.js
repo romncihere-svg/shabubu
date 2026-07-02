@@ -1265,7 +1265,7 @@ Jack ❤️`;
             } else if (target === 'altar') {
                 document.getElementById('altar-panel').classList.remove('hidden');
                 document.getElementById('codex-tip-text').innerText = "Find and click the three unlit candles floating around to light them.";
-                gsap.to(camera.position, { x: 0, y: 3, z: 14, duration: 2 });
+                gsap.to(camera.position, { x: 0, y: 4, z: 22, duration: 2 });
                 gsap.to(bigHeartMat, { opacity: 0, duration: 1 });
             } else if (target === 'synth') {
                 document.getElementById('synth-panel').classList.remove('hidden');
