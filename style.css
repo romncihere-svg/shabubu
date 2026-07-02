@@ -620,7 +620,8 @@ html {
     width: 100vw;
     height: 100vh;
     background: #030208;
-    z-index: 9999;
+    z-index: 2147483647 !important;
+    pointer-events: auto !important;
     display: flex;
     align-items: center;
     justify-content: center;
