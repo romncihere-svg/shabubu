@@ -9,8 +9,12 @@
     --text-white: #fafafa;
     --text-dim: #9ca3af;
     --glass-bg: rgba(10, 8, 22, 0.45);
-    --glass-border: rgba(255, 255, 255, 0.05);
-    --glass-glow: rgba(167, 139, 250, 0.15);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-glow: rgba(244, 114, 182, 0.15);
+
+    /* Cursors */
+    --cursor-default: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32"><path fill="%23ffffff" stroke="%23f472b6" stroke-width="2" stroke-linejoin="round" d="M16 3L19 13L29 16L19 19L16 29L13 19L3 16L13 13L16 3Z"/></svg>') 14 14, auto;
+    --cursor-pointer: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32"><path fill="%23f472b6" stroke="%23ffffff" stroke-width="2" d="M16 28.47l-1.93-1.76C6.53 20.48 2 16.37 2 11.33 2 7.23 5.23 4 9.33 4c2.32 0 4.55 1.08 6 2.79C16.78 5.08 19.01 4 21.33 4 25.43 4 28.67 7.23 28.67 11.33c0 5.04-4.53 9.15-11.4 15.39L16 28.47z"/></svg>') 14 14, pointer;
 
     --font-heading: 'Cinzel Decorative', Georgia, serif;
     --font-serif: 'Playfair Display', serif;
@@ -36,6 +40,12 @@ html {
     font-family: var(--font-sans);
     position: relative;
     user-select: none;
+    cursor: var(--cursor-default);
+}
+
+/* Apply cute pointer cursor to all interactive elements */
+a, button, [role="button"], input, label, select, textarea, .tap-to-start, .rune, .synth-matrix, .close-modal-btn, .enter-universe-btn, .dock-btn {
+    cursor: var(--cursor-pointer) !important;
 }
 
 /* ----------------------------------------------------
