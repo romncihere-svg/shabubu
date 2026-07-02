@@ -943,6 +943,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function triggerFireworksAndMemories() {
+        document.getElementById('click-heart-hint').classList.add('hidden');
         fireworksActive = true;
 
         gsap.to(crystalHeart.scale, { x: 0.6, y: 0.6, z: 0.6, duration: 0.4, ease: 'elastic.out(1, 0.5)' });
@@ -1243,19 +1244,24 @@ Jack ❤️`;
             // Reset panel hides
             document.getElementById('synth-panel').classList.add('hidden');
             document.getElementById('altar-panel').classList.add('hidden');
+            const hintArrow = document.getElementById('click-heart-hint');
+            if (hintArrow) hintArrow.classList.add('hidden');
 
             if (target === 'ambient') {
                 document.getElementById('codex-tip-text').innerText = "Drag the screen to spin things, scroll to zoom, and double-click the heart for a surprise.";
                 gsap.to(camera.position, { x: 0, y: 5, z: 25, duration: 2 });
                 gsap.to(bigHeartMat, { opacity: 0, duration: 1 });
             } else if (target === 'memories') {
-                document.getElementById('codex-tip-text').innerText = "Click on any floating photo card to open it up.";
                 gsap.to(camera.position, { x: 0, y: 8, z: 18, duration: 2 });
-                // Always show the video when memories is clicked — no guards needed.
-                // The button click itself is a user gesture, so play() is allowed.
-                hasTriggeredMemories = true;
                 gsap.to(bigHeartMat, { opacity: 0.9, duration: 1 });
-                revealVideoInHeart(false);
+                
+                if (hasTriggeredMemories) {
+                    document.getElementById('codex-tip-text').innerText = "Click on any floating photo card to open it up.";
+                    revealVideoInHeart(false);
+                } else {
+                    document.getElementById('codex-tip-text').innerText = "Tap the glowing heart 3 times to unlock our memories!";
+                    if (hintArrow) hintArrow.classList.remove('hidden');
+                }
             } else if (target === 'altar') {
                 document.getElementById('altar-panel').classList.remove('hidden');
                 document.getElementById('codex-tip-text').innerText = "Find and click the three unlit candles floating around to light them.";
