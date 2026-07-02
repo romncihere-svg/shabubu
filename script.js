@@ -930,7 +930,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 (Math.random() - 0.5) * 20 - 15
             );
             const withWhistle = Math.random() > 0.6;
-            explodeFireworkShell(pos, color, 60 + Math.random() * 30, withWhistle);
+            explodeFireworkShell(pos, color, Math.floor(60 + Math.random() * 30), withWhistle);
         }, 1200); // 1.2 seconds between continuous random fireworks
     }
 
