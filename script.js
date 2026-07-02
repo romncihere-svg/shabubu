@@ -271,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
     innerHeartMesh.scale.set(0.58, 0.58, 0.58);
     // Push the video plane to z=1.0 so it sits clearly in FRONT of the crystal shell
     // (crystal front face is at approx z=+0.75 in local space, so 1.0 clears it)
-    innerHeartMesh.position.z = 1.0;
+    innerHeartMesh.position.z = 3.0;
     // Render AFTER the crystal so depth sort is correct
     innerHeartMesh.renderOrder = 2;
     crystalHeart.renderOrder = 1;
