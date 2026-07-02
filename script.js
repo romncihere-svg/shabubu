@@ -38,23 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let heartAnimTime = 0;
     let universeEntered = false;      // set true once the user enters the universe
 
-    // Countdown Timer (Simulated local target July 4, 2026)
-    const birthdayTarget = new Date('2026-07-04T00:00:00').getTime();
-    function updateCountdown() {
-        const now = new Date().getTime();
-        const difference = birthdayTarget - now;
-        if (difference < 0) {
-            document.getElementById('countdown').innerText = "IT'S YOUR DAY, MY UNIVERSE!";
-            return;
-        }
-        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-        document.getElementById('countdown').innerText = `${days}d : ${hours}h : ${minutes}m : ${seconds}s`;
-    }
-    setInterval(updateCountdown, 1000);
-    updateCountdown();
+
+
 
     // ----------------------------------------------------
     // 2. SYNTHESIZER SOUND ENGINE (WEB AUDIO API)
@@ -214,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
     crystalHeart.name = "crystalHeart";
     heartGroup.add(crystalHeart);
     const videoElement = document.getElementById('memoriesVideoPlayer');
-    
+
     // ULTIMATE CORS BYPASS: Fetch video locally as a Blob
     fetch('Memories.mp4')
         .then(response => response.blob())
@@ -1162,7 +1147,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1200);
     }
 
-    const scrollMessage = `Happy Birthday Bubu! \n\nI wanted to make something a bit different for you this year instead of just a boring card. \n\nLooking back at our photos and our very first chat makes me realize how incredibly lucky i am to have you in my life. Every single day with you is filled with laughs, stupid jokes, and moments that I'll keep close to me forever. \n\nThank you for being you—for your kindness, your smile, and for always being my favorite person to talk to. I hope your day is as wonderful as you are, and I can't wait to make many more memories together. \n\nLove you always, \nJack ❤️`;
+    const scrollMessage = `Happy Birthday, Bubu! ❤️
+
+I wanted to make something a little different for you this year. It's my first time trying to surprise someone like this, and I really hope you enjoy it.
+
+Looking back at our photos and even our very first chat makes me realize just how lucky I am to have you in my life. Every day with you is filled with laughter, silly conversations, and little moments that I'll always hold close to my heart.
+
+Thank you for being you—for your kindness, your beautiful smile, and for always being my favorite person to talk to. I hope your birthday is as amazing as you are, and I can't wait to make so many more beautiful memories together.
+
+Love you always,
+Jack ❤️`;
     let scrollTyped = false;
 
     function typewriterScrollLetter() {
