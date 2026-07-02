@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let hasTriggeredMemories = false; // tracks if the big heart bg should show
     let isVideoPlaying = false;
     let heartAnimTime = 0;
+    let universeEntered = false;      // set true once the user enters the universe
 
     // Countdown Timer (Simulated local target July 4, 2026)
     const birthdayTarget = new Date('2026-07-04T00:00:00').getTime();
@@ -212,20 +213,14 @@ document.addEventListener('DOMContentLoaded', () => {
     crystalHeart.name = "crystalHeart";
     heartGroup.add(crystalHeart);
 
-    // Inner video heart
+    // Inner video heart — VideoTexture samples directly in WebGL, no CORS needed.
     const videoElement = document.getElementById('memoriesVideoPlayer');
-
-    // Prime the video so the first frame is decoded before the texture is sampled.
-    // The element already has muted + preload="auto" in HTML, so this resolves quickly.
-    videoElement.load();
+    videoElement.load(); // Kick off network fetch early
 
     const videoTexture = new THREE.VideoTexture(videoElement);
     videoTexture.minFilter = THREE.LinearFilter;
     videoTexture.magFilter = THREE.LinearFilter;
     videoTexture.generateMipmaps = false;
-    // NOTE: THREE.RGBFormat is removed — it is deprecated in r128+ and causes black textures.
-    
-    // Reset texture to default 1:1 mapping. We will manually map the UVs on the geometry!
     videoTexture.wrapS = THREE.ClampToEdgeWrapping;
     videoTexture.wrapT = THREE.ClampToEdgeWrapping;
     videoTexture.center.set(0, 0);
@@ -233,12 +228,16 @@ document.addEventListener('DOMContentLoaded', () => {
     videoTexture.repeat.set(1, 1);
     videoTexture.offset.set(0, 0);
 
+    // Crystal heart must NOT write depth — otherwise it occludes the inner video heart
+    crystalMaterial.depthWrite = false;
+
     const innerHeartMat = new THREE.MeshBasicMaterial({ 
         map: videoTexture,
         transparent: true,
         opacity: 0,
         color: 0xffffff,
-        side: THREE.DoubleSide // ABSOLUTELY REQUIRED to prevent the screen from being invisible!
+        side: THREE.DoubleSide,
+        depthWrite: false
     });
 
     const flatExtrudeSettings = { steps: 1, depth: 0.01, bevelEnabled: false };
@@ -270,7 +269,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const innerHeartMesh = new THREE.Mesh(flatHeartGeo, innerHeartMat);
     innerHeartMesh.rotation.x = Math.PI; // Matches crystalHeart orientation
     innerHeartMesh.scale.set(0.58, 0.58, 0.58);
-    innerHeartMesh.position.z = 0;
+    // Push the video plane to z=1.0 so it sits clearly in FRONT of the crystal shell
+    // (crystal front face is at approx z=+0.75 in local space, so 1.0 clears it)
+    innerHeartMesh.position.z = 1.0;
+    // Render AFTER the crystal so depth sort is correct
+    innerHeartMesh.renderOrder = 2;
+    crystalHeart.renderOrder = 1;
     heartGroup.add(innerHeartMesh);
 
     // ----------------------------------------------------
@@ -939,33 +943,44 @@ document.addEventListener('DOMContentLoaded', () => {
             gsap.to(camera.position, { x: 0, y: 8, z: 18, duration: 2.8, ease: 'power2.inOut' });
             gsap.to(bigHeartMat, { opacity: 0.9, duration: 2.8, ease: 'power2.inOut' });
 
-            // Play Memories video inside the heart
-            if (videoElement) {
-                isVideoPlaying = true;
-                // The video has been playing muted since enterUniverse().
-                // Just rewind to the start and unmute it — no play() race condition.
-                videoElement.currentTime = 0;
-                videoElement.muted = false;
-                // Catch any remaining policy block — fallback stays muted but visible
-                const playPromise = videoElement.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(err => {
-                        console.warn('Video unmute blocked, staying muted:', err);
-                        videoElement.muted = true;
-                    });
-                }
-                gsap.to(innerHeartMat, { opacity: 1, duration: 2.0, ease: 'power2.inOut' });
-                // Dim the outer crystal color so the video pops more
-                gsap.to(crystalMaterial.color, { r: 1, g: 1, b: 1, duration: 2.0 }); 
-                // Scale up the heart and face it to the camera
-                gsap.to(heartGroup.scale, { x: 2.2, y: 2.2, z: 2.2, duration: 2.0, ease: 'power2.inOut' });
-                gsap.to(heartGroup.rotation, { y: 0, duration: 2.0, ease: 'power2.inOut' });
-                gsap.to(heartGroup.position, { y: 1.5, duration: 2.0, ease: 'power2.inOut' });
-            }
+            // Reveal video at full 2.2x scale after fireworks
+            revealVideoInHeart(true);
         }, 4000);
     }
 
-    let touchedObject = null;
+    // ====================================================
+    // SHARED: Reveal video inside the heart
+    // Called from both the fireworks finish AND the memories button
+    // ====================================================
+    function revealVideoInHeart(bigScale) {
+        // Reset flag so re-clicking always works
+        isVideoPlaying = true;
+
+        // Mute first to satisfy autoplay policy, then unmute after play() promise resolves
+        videoElement.muted = true;
+        videoElement.currentTime = 0;
+        const playPromise = videoElement.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                // Play started successfully — now unmute for sound
+                videoElement.muted = false;
+            }).catch(err => {
+                console.warn('Video play blocked, keeping muted:', err);
+                // Video plays silently — at least the visuals work
+            });
+        }
+
+        const targetScale = bigScale ? 2.2 : 1.6;
+        gsap.to(innerHeartMat, { opacity: 1, duration: 2.0, ease: 'power2.inOut' });
+        gsap.to(crystalMaterial.color, { r: 1, g: 1, b: 1, duration: 2.0 });
+        gsap.to(crystalMaterial, { opacity: 0.3, duration: 2.0 }); // Fade crystal so video pops
+        gsap.to(heartGroup.scale, { x: targetScale, y: targetScale, z: targetScale, duration: 2.0, ease: 'power2.inOut' });
+        gsap.to(heartGroup.rotation, { y: 0, duration: 2.0, ease: 'power2.inOut' });
+        gsap.to(heartGroup.position, { y: 1.5, duration: 2.0, ease: 'power2.inOut' });
+    }
+
+    // ====================================================
+
 
     function getIntersection(e) {
         // Calculate mouse position in normalized device coordinates
@@ -1161,9 +1176,11 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (target === 'memories') {
                 document.getElementById('codex-tip-text').innerText = "Click on any floating photo card to open it up.";
                 gsap.to(camera.position, { x: 0, y: 8, z: 18, duration: 2 });
-                if (hasTriggeredMemories) {
-                    gsap.to(bigHeartMat, { opacity: 0.9, duration: 1 });
-                }
+                // Always show the video when memories is clicked — no guards needed.
+                // The button click itself is a user gesture, so play() is allowed.
+                hasTriggeredMemories = true;
+                gsap.to(bigHeartMat, { opacity: 0.9, duration: 1 });
+                revealVideoInHeart(false);
             } else if (target === 'altar') {
                 document.getElementById('altar-panel').classList.remove('hidden');
                 document.getElementById('codex-tip-text').innerText = "Find and click the three unlit candles floating around to light them.";
@@ -1297,6 +1314,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function enterUniverse() {
         initSynth();
+        universeEntered = true;
         // Start background music
         startBgMusic();
 
